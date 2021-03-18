@@ -172,3 +172,8 @@ Outputs:
         Value: !Ref VPC
         Export:
             Name: !Sub ${EnvironmentName}-VPCID
+    PrivateSubnets:
+        Description: Private subnet IDs
+        Value: !Join [ ",", [ !Ref PrivateSubnet1, !Ref PrivateSubnet2 ]]
+        Export:
+            Name: !Sub ${EnvironmentName}-PRIV-NETS
