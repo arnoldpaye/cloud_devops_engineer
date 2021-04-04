@@ -87,3 +87,9 @@ Resources:
       RouteTableId: !Ref PrivateRouteTable
       SubnetId: !Ref PrivateSubnet
 
+Outputs:
+  VPC:
+    Description: VPC reference
+    Value: !Ref VPC
+    Export:
+        Name: ARN-VPCID
