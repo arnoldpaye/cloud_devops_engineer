@@ -6,7 +6,7 @@ Parameters:
     Type: String
 
 Resources:
-  LBSecureGroup:
+  LBSecGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Allow http to our load balancer
@@ -32,8 +32,8 @@ Resources:
           !Sub "${EnvironmentName}-VPCID"
       SecurityGroupIngress:
         - IpProtocol: tcp
-          FromPort: 8080
-          ToPort: 8080
+          FromPort: 80
+          ToPort: 80
           CidrIp: 0.0.0.0/0
         - IpProtocol: tcp
           FromPort: 22
@@ -50,20 +50,11 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
-          # Install docker
-          apt-get update
-          apt-get install -y apt-transport-https ca-certificates curl
-          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-          add-apt-repository \
-          "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
-          $(lsb_release -cs) \
-          stable"
-          apt-get update
-          apt-get install -y docker-ce
-          usermod -aG docker ubuntu
-          docker run -p 8080:8080 tomcat:8.0
-      ImageId: ami-07a0844029df33d7d
-      SecurityGroups:
+          sudo apt-get update -y
+          sudo apt-get install apache2 -y
+          sudo systemctl start apache2.service
+      ImageId: ami-08962a4068733a2b6
+      SecurityGroups: 
         - Ref: WebServerSecGroup
       InstanceType: t2.micro
       BlockDeviceMappings:
@@ -89,7 +80,7 @@ Resources:
         - Fn::ImportValue: !Sub "${EnvironmentName}-PUB1-SN"
         - Fn::ImportValue: !Sub "${EnvironmentName}-PUB2-SN"
       SecurityGroups:
-        - Ref: LBSecureGroup
+        - Ref: LBSecGroup
   Listener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
@@ -106,11 +97,11 @@ Resources:
     Properties:
       Actions:
       - Type: forward
-        TargetGroupArn: !Ref 'WebAppTargetGroup'
+        TargetGroupArn: !Ref WebAppTargetGroup
       Conditions:
         - Field: path-pattern
           Values: [/]
-      ListenerArn: !Ref 'Listener'
+      ListenerArn: !Ref Listener
       Priority: 1
   WebAppTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
@@ -120,7 +111,7 @@ Resources:
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 8
       HealthyThresholdCount: 2
-      Port: 8080
+      Port: 80
       Protocol: HTTP
       UnhealthyThresholdCount: 5
       VpcId:
